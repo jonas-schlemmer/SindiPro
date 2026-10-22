@@ -27,7 +27,20 @@ export default function App() {
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <header className="bg-slate-900 text-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-xl font-bold">SindiPro</h1>
+          <div className="flex items-center gap-2">
+            <svg className="h-8 w-8" viewBox="0 0 512 512" aria-hidden="true">
+              <rect width="512" height="512" rx="112" fill="#0284c7" />
+              <rect x="144" y="112" width="224" height="288" rx="32" fill="#ffffff" />
+              <g fill="#0284c7">
+                <rect x="192" y="160" width="48" height="48" rx="10" />
+                <rect x="272" y="160" width="48" height="48" rx="10" />
+                <rect x="192" y="240" width="48" height="48" rx="10" />
+                <rect x="272" y="240" width="48" height="48" rx="10" />
+                <rect x="232" y="320" width="48" height="80" rx="10" />
+              </g>
+            </svg>
+            <h1 className="text-xl font-bold">SindiPro</h1>
+          </div>
           {/* flex-wrap: no celular o menu quebra em mais de uma linha em vez de estourar a tela */}
           <nav className="flex flex-wrap gap-2">
             {MENU.map((item) => (
@@ -46,8 +59,8 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
-        {/* Trocar de "aberta" troca o componente inteiro; cada tela busca seus próprios dados ao abrir. */}
-        <Tela />
+        {/* irPara deixa a tela abrir outra tela (usado pelos cards do Painel). */}
+        <Tela irPara={setAberta} />
       </main>
     </div>
   )

@@ -35,8 +35,6 @@ function ItemGrade({ children }) {
   )
 }
 
-// Topo do Painel: saudação à esquerda, data e hora à direita.
-// Tem o próprio relógio (atualiza sozinho a cada segundo) para não redesenhar o Painel inteiro.
 // Topo do Painel: saudação grande à esquerda, data e hora à direita.
 // Tem o próprio relógio (atualiza sozinho a cada segundo) para não redesenhar o Painel inteiro.
 function Cabecalho() {
@@ -57,6 +55,7 @@ function Cabecalho() {
         <h2 className="bg-gradient-to-r from-sky-600 to-violet-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl">
           {saudacao(agora)}!
         </h2>
+        <p className="mt-1 text-sm text-slate-500">Veja como está o condomínio hoje.</p>
       </div>
       <div className="text-right">
         <p className="text-3xl font-bold leading-none tabular-nums text-slate-800">{hora}</p>
@@ -79,7 +78,7 @@ function BarraOcupacao({ usado, total, tipo }) {
   }
   return (
     <div className="flex items-center gap-2">
-      <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-100">
         <div className={`h-full rounded-full transition-all ${cor}`} style={{ width: `${pct}%` }} />
       </div>
       <span className="text-xs text-slate-500">{pct}%</span>
@@ -224,7 +223,7 @@ export default function Painel({ irPara }) {
     <>
       <Cabecalho />
 
-      {/* Alertas */}
+      {/* Alertas (ocupam a largura toda, acima das colunas) */}
       {alertas.length > 0 && (
         <div className="mb-6 space-y-2">
           {alertas.map((a) => (
@@ -253,97 +252,101 @@ export default function Painel({ irPara }) {
         </div>
       )}
 
-      {/* Cards de números */}
-      <Cartao titulo="Visão geral do condomínio">
-        <GradeCentralizada>
-          {itens.map((item) => (
-            <ItemGrade key={item.rotulo}>
-              <CartaoNumero
-                icone={item.icone}
-                cor={item.cor}
-                numero={item.valor}
-                rotulo={item.rotulo}
-                detalhe={item.detalhe}
-                destaque={item.destaque}
-                onClick={() => irPara(item.para)}
-              />
-            </ItemGrade>
-          ))}
-        </GradeCentralizada>
-      </Cartao>
-
-      {/* Ocupação */}
-      <Cartao titulo="Ocupação">
-        <GradeCentralizada>
-          {ocupacao.map((item) => (
-            <ItemGrade key={item.rotulo}>
-              <CartaoNumero
-                icone={item.icone}
-                cor={item.cor}
-                numero={item.valor}
-                rotulo={item.rotulo}
-                detalhe={item.detalhe}
-                onClick={() => irPara(item.para)}
-              />
-            </ItemGrade>
-          ))}
-        </GradeCentralizada>
-      </Cartao>
-
-      <div className="grid gap-x-6 lg:grid-cols-2">
-        {/* Resumo por bloco */}
-        <Cartao titulo="Resumo por bloco">
-          {dados.resumoBlocos.length === 0 ? (
-            <p className="text-sm text-slate-500">Nenhuma unidade cadastrada ainda.</p>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {dados.resumoBlocos.map((b) => (
-                <li key={b.bloco} className="flex items-center justify-between py-3">
-                  <span className="font-medium text-slate-800">Bloco {b.bloco}</span>
-                  <span className="text-sm text-slate-500">
-                    {b.unidades} {plural(b.unidades, 'unidade', 'unidades')} · {b.moradores}{' '}
-                    {plural(b.moradores, 'morador', 'moradores')}
-                  </span>
-                </li>
+      {/* Duas colunas: esquerda (2/3) com os cards, direita (1/3) com as listas.
+          Em telas menores, tudo empilha em uma coluna só. */}
+      <div className="grid gap-x-6 lg:grid-cols-3">
+        {/* COLUNA ESQUERDA */}
+        <div className="min-w-0 lg:col-span-2">
+          <Cartao titulo="Visão geral do condomínio">
+            <GradeCentralizada>
+              {itens.map((item) => (
+                <ItemGrade key={item.rotulo}>
+                  <CartaoNumero
+                    icone={item.icone}
+                    cor={item.cor}
+                    numero={item.valor}
+                    rotulo={item.rotulo}
+                    detalhe={item.detalhe}
+                    destaque={item.destaque}
+                    onClick={() => irPara(item.para)}
+                  />
+                </ItemGrade>
               ))}
-            </ul>
-          )}
-        </Cartao>
+            </GradeCentralizada>
+          </Cartao>
 
-        {/* Últimos moradores */}
-        <Cartao titulo="Moradores mais recentes">
-          {dados.recentes.length === 0 ? (
-            <p className="text-sm text-slate-500">Nenhum morador cadastrado ainda.</p>
-          ) : (
-            <>
+          {/* Ocupação: 2 cards lado a lado, cada um com metade da largura (cabe a barra inteira) */}
+          <Cartao titulo="Ocupação">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {ocupacao.map((item) => (
+                <CartaoNumero
+                  key={item.rotulo}
+                  icone={item.icone}
+                  cor={item.cor}
+                  numero={item.valor}
+                  rotulo={item.rotulo}
+                  detalhe={item.detalhe}
+                  onClick={() => irPara(item.para)}
+                />
+              ))}
+            </div>
+          </Cartao>
+        </div>
+
+        {/* COLUNA DIREITA */}
+        <div className="min-w-0">
+          <Cartao titulo="Resumo por bloco">
+            {dados.resumoBlocos.length === 0 ? (
+              <p className="text-sm text-slate-500">Nenhuma unidade cadastrada ainda.</p>
+            ) : (
               <ul className="divide-y divide-slate-100">
-                {dados.recentes.map((m) => (
-                  <li key={m.id} className="flex items-center gap-3 py-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-600">
-                      {m.nome?.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-800">{m.nome}</p>
-                      {m.unidade && (
-                        <p className="text-xs text-slate-400">
-                          bloco {m.unidade.bloco}, apto {m.unidade.numeroApartamento}
-                        </p>
-                      )}
-                    </div>
+                {dados.resumoBlocos.map((b) => (
+                  <li key={b.bloco} className="flex items-center justify-between gap-2 py-3">
+                    <span className="font-medium text-slate-800">Bloco {b.bloco}</span>
+                    <span className="text-right text-sm text-slate-500">
+                      {b.unidades} {plural(b.unidades, 'unidade', 'unidades')} · {b.moradores}{' '}
+                      {plural(b.moradores, 'morador', 'moradores')}
+                    </span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 text-right">
-                <button
-                  onClick={() => irPara('moradores')}
-                  className="text-sm font-medium text-sky-600 transition hover:text-sky-700 hover:underline"
-                >
-                  Ver todos →
-                </button>
-              </div>
-            </>
-          )}
-        </Cartao>
+            )}
+          </Cartao>
+
+          <Cartao titulo="Moradores mais recentes">
+            {dados.recentes.length === 0 ? (
+              <p className="text-sm text-slate-500">Nenhum morador cadastrado ainda.</p>
+            ) : (
+              <>
+                <ul className="divide-y divide-slate-100">
+                  {dados.recentes.map((m) => (
+                    <li key={m.id} className="flex items-center gap-3 py-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-600">
+                        {m.nome?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-800">{m.nome}</p>
+                        {m.unidade && (
+                          <p className="text-xs text-slate-500">
+                            bloco {m.unidade.bloco}, apto {m.unidade.numeroApartamento}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3 text-right">
+                  <button
+                    onClick={() => irPara('moradores')}
+                    className="text-sm font-medium text-sky-600 transition hover:text-sky-700 hover:underline"
+                  >
+                    Ver todos →
+                  </button>
+                </div>
+              </>
+            )}
+          </Cartao>
+        </div>
       </div>
     </>
   )

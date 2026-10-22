@@ -73,7 +73,7 @@ export function Cartao({ titulo, children }) {
   )
 }
 
-// NOVO: etiquetinha colorida. Ex.: <Selo cor="vermelho">Lotado</Selo>
+// Etiquetinha colorida. Ex.: <Selo cor="vermelho">Lotado</Selo>
 export function Selo({ cor = 'cinza', children }) {
   const cores = {
     cinza: 'bg-slate-100 text-slate-700',
@@ -89,11 +89,8 @@ export function Selo({ cor = 'cinza', children }) {
   )
 }
 
-// NOVO: card de número do Painel.
-// Ex.: <CartaoNumero icone="🏢" numero={3} rotulo="Prédios" />
-// destaque = true deixa o card amarelo (para algo que exige atenção)
-// Card de número do Painel: ícone em cima, número no meio, nome embaixo (tudo centralizado).
-// destaque = true deixa o card amarelo (para algo que exige atenção)
+// ---------- Card de número do Painel ----------
+
 // Ícones de linha (todos no mesmo estilo). Use o nome em <CartaoNumero icone="predio" />
 const ICONES = {
   predio: (
@@ -184,5 +181,92 @@ export function CartaoNumero({
         {detalhe && <div className="mt-1">{detalhe}</div>}
       </div>
     </div>
+  )
+}
+
+// ---------- Pesquisa ----------
+
+// Tira acentos e maiúsculas: "Ação" e "acao" passam a ser iguais na busca.
+function normalizar(texto) {
+  return String(texto ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+// Filtra a lista pelo texto digitado (ignora acentos e maiúsculas).
+//   lista   = os itens
+//   busca   = texto digitado na pesquisa
+//   textoDe = função que devolve o texto onde a busca procura (ex.: (p) => `${p.nome} ${p.cidade}`)
+export function filtrar(lista, busca, textoDe) {
+  const termo = normalizar(busca).trim()
+  return termo ? lista.filter((item) => normalizar(textoDe(item)).includes(termo)) : lista
+}
+
+// Campo de pesquisa com ícone de lupa.
+export function BarraFiltro({ busca, aoBuscar, placeholder = 'Pesquisar...' }) {
+  return (
+    <div className="relative mb-4">
+      <svg
+        viewBox="0 0 24 24"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <input
+        type="search"
+        value={busca}
+        onChange={(e) => aoBuscar(e.target.value)}
+        placeholder={placeholder}
+        className={`${estiloInput} pl-9`}
+      />
+    </div>
+  )
+}
+
+// Botão pequeno só com ícone (lápis para editar, lixeira para excluir).
+export function BotaoIcone({ tipo = 'editar', ...props }) {
+  const ehExcluir = tipo === 'excluir'
+  const rotulo = ehExcluir ? 'Excluir' : 'Editar'
+  const cor = ehExcluir ? 'text-red-600 hover:bg-red-50' : 'text-slate-600 hover:bg-slate-100'
+  return (
+    <button
+      type="button"
+      title={rotulo}
+      aria-label={rotulo}
+      className={`rounded-lg p-2 transition focus:outline-none focus:ring-2 focus:ring-sky-200 ${cor}`}
+      {...props}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {ehExcluir ? (
+          <>
+            <path d="M3 6h18" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </>
+        ) : (
+          <>
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+          </>
+        )}
+      </svg>
+    </button>
   )
 }

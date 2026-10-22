@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
-import { Aviso, Botao, Campo, Carregando, Cartao, SemRegistros, estiloInput } from '../components/ui.jsx'
+import {
+  Aviso,
+  BarraFiltro,
+  Botao,
+  BotaoIcone,
+  Campo,
+  Carregando,
+  Cartao,
+  SemRegistros,
+  estiloInput,
+  filtrar,
+} from '../components/ui.jsx'
 
 const FORM_VAZIO = { descricao: '', remetente: '', moradorId: '' }
 
@@ -18,6 +29,7 @@ export default function Encomendas() {
   const [erro, setErro] = useState('')
   const [campos, setCampos] = useState({})
   const [sucesso, setSucesso] = useState('')
+  const [busca, setBusca] = useState('') // texto da pesquisa
 
   // Recebe o filtro como parâmetro para sempre usar o valor mais novo do checkbox.
   async function carregar(pendentes = somentePendentes) {
@@ -97,6 +109,15 @@ export default function Encomendas() {
     }
   }
 
+  // Lista que aparece na tela: já filtrada pela pesquisa.
+  const visiveis = filtrar(
+    encomendas,
+    busca,
+    (enc) =>
+      `${enc.descricao} ${enc.remetente ?? ''} ${enc.morador?.nome ?? ''} bloco ${enc.morador?.unidade?.bloco ?? ''} apto ${enc.morador?.unidade?.numeroApartamento ?? ''}`,
+  )
+  const contador = busca.trim() ? `${visiveis.length} de ${encomendas.length}` : encomendas.length
+
   return (
     <>
       <Aviso tipo="erro">{erro}</Aviso>
@@ -126,7 +147,7 @@ export default function Encomendas() {
         </form>
       </Cartao>
 
-      <Cartao titulo="Encomendas">
+      <Cartao titulo={`Encomendas (${contador})`}>
         <label className="mb-4 flex items-center gap-2 text-sm">
           <input type="checkbox" checked={somentePendentes} onChange={alternarFiltro} />
           Mostrar só as que ainda não foram retiradas
@@ -137,45 +158,67 @@ export default function Encomendas() {
         ) : encomendas.length === 0 ? (
           <SemRegistros>Nenhuma encomenda por aqui.</SemRegistros>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b text-slate-500">
-                <tr>
-                  <th className="py-2">Descrição</th>
-                  <th>Morador</th>
-                  <th>Chegou em</th>
-                  <th>Retirada</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {encomendas.map((enc) => (
-                  <tr key={enc.id} className="border-b last:border-0">
-                    <td className="py-2 font-medium">
-                      {enc.descricao}
-                      {enc.remetente && <span className="block text-xs text-slate-400">de {enc.remetente}</span>}
-                    </td>
-                    <td>
-                      {enc.morador.nome}
-                      <span className="block text-xs text-slate-400">
-                        bloco {enc.morador.unidade.bloco}, apto {enc.morador.unidade.numeroApartamento}
-                      </span>
-                    </td>
-                    <td>{formatarData(enc.dataRecebimento)}</td>
-                    <td>
-                      {enc.dataRetirada ? formatarData(enc.dataRetirada) : (
-                        <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Na portaria</span>
-                      )}
-                    </td>
-                    <td className="space-x-2 py-2 text-right">
-                      {!enc.dataRetirada && <Botao onClick={() => retirar(enc.id)}>Marcar retirada</Botao>}
-                      <Botao variante="perigo" onClick={() => excluir(enc.id)}>Excluir</Botao>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <BarraFiltro
+              busca={busca}
+              aoBuscar={setBusca}
+              placeholder="Pesquisar por descrição, remetente, morador, bloco ou apto..."
+            />
+
+            {visiveis.length === 0 ? (
+              <SemRegistros>Nenhuma encomenda encontrada para "{busca}".</SemRegistros>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="py-2 pr-4">Descrição</th>
+                      <th className="pr-4">Morador</th>
+                      <th className="pr-4">Chegou em</th>
+                      <th className="pr-4">Retirada</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visiveis.map((enc) => (
+                      <tr key={enc.id} className="border-b border-slate-100 transition last:border-0 hover:bg-slate-50">
+                        <td className="py-3 pr-4 font-medium text-slate-800">
+                          {enc.descricao}
+                          {enc.remetente && (
+                            <span className="block text-xs font-normal text-slate-500">de {enc.remetente}</span>
+                          )}
+                        </td>
+                        <td className="pr-4 text-slate-700">
+                          {enc.morador?.nome}
+                          {enc.morador?.unidade && (
+                            <span className="block text-xs text-slate-500">
+                              bloco {enc.morador.unidade.bloco}, apto {enc.morador.unidade.numeroApartamento}
+                            </span>
+                          )}
+                        </td>
+                        <td className="pr-4 text-slate-600">{formatarData(enc.dataRecebimento)}</td>
+                        <td className="pr-4">
+                          {enc.dataRetirada ? (
+                            <span className="text-slate-600">{formatarData(enc.dataRetirada)}</span>
+                          ) : (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                              Na portaria
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {!enc.dataRetirada && <Botao onClick={() => retirar(enc.id)}>Marcar retirada</Botao>}
+                            <BotaoIcone tipo="excluir" onClick={() => excluir(enc.id)} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </Cartao>
     </>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import ModalConfirmar from '../components/ModalConfirmar.jsx'
 import {
   Aviso,
   BarraFiltro,
@@ -25,6 +26,7 @@ export default function Predios() {
   const [campos, setCampos] = useState({}) // erros por campo, vindos do backend (@Valid)
   const [sucesso, setSucesso] = useState('')
   const [busca, setBusca] = useState('') // texto da pesquisa
+  const [predioParaExcluir, setPredioParaExcluir] = useState(null) // prédio que está na janela de confirmação
 
   async function carregar() {
     setCarregando(true)
@@ -87,17 +89,20 @@ export default function Predios() {
     setForm(FORM_VAZIO)
   }
 
-  async function excluir(id) {
-    if (!window.confirm('Excluir este prédio?')) return
+  // Roda quando o usuário clica em "Excluir" na janela de confirmação.
+  async function confirmarExclusao() {
+    const predio = predioParaExcluir
+    setPredioParaExcluir(null) // fecha a janela
     setErro('')
     setSucesso('')
     try {
-      await api.delete(`/predios/${id}`)
+      await api.delete(`/predios/${predio.id}`)
       setSucesso('Prédio excluído.')
       carregar()
     } catch (e) {
       // Aqui aparece a regra do backend: "o prédio ainda possui unidades cadastradas".
       setErro(e.message)
+      window.scrollTo({ top: 0, behavior: 'smooth' }) // o aviso fica no topo da página
     }
   }
 
@@ -185,7 +190,7 @@ export default function Predios() {
                         <td className="py-2 text-right">
                           <div className="flex justify-end gap-1">
                             <BotaoIcone tipo="editar" onClick={() => editar(p)} />
-                            <BotaoIcone tipo="excluir" onClick={() => excluir(p.id)} />
+                            <BotaoIcone tipo="excluir" onClick={() => setPredioParaExcluir(p)} />
                           </div>
                         </td>
                       </tr>
@@ -197,6 +202,15 @@ export default function Predios() {
           </>
         )}
       </Cartao>
+
+      {predioParaExcluir && (
+        <ModalConfirmar
+          titulo="Excluir prédio?"
+          mensagem={`Você vai excluir "${predioParaExcluir.nomeCondominio}". Essa ação não pode ser desfeita.`}
+          aoConfirmar={confirmarExclusao}
+          aoCancelar={() => setPredioParaExcluir(null)}
+        />
+      )}
     </>
   )
 }

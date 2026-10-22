@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import ModalConfirmar from '../components/ModalConfirmar.jsx'
 import {
   Aviso,
   BarraFiltro,
@@ -30,6 +31,7 @@ export default function Encomendas() {
   const [campos, setCampos] = useState({})
   const [sucesso, setSucesso] = useState('')
   const [busca, setBusca] = useState('') // texto da pesquisa
+  const [encomendaParaExcluir, setEncomendaParaExcluir] = useState(null) // encomenda na janela de confirmação
 
   // Recebe o filtro como parâmetro para sempre usar o valor mais novo do checkbox.
   async function carregar(pendentes = somentePendentes) {
@@ -96,16 +98,19 @@ export default function Encomendas() {
     }
   }
 
-  async function excluir(id) {
-    if (!window.confirm('Excluir este registro de encomenda?')) return
+  // Roda quando o usuário clica em "Excluir" na janela de confirmação.
+  async function confirmarExclusao() {
+    const encomenda = encomendaParaExcluir
+    setEncomendaParaExcluir(null) // fecha a janela
     setErro('')
     setSucesso('')
     try {
-      await api.delete(`/encomendas/${id}`)
+      await api.delete(`/encomendas/${encomenda.id}`)
       setSucesso('Encomenda excluída.')
       carregar()
     } catch (e) {
       setErro(e.message)
+      window.scrollTo({ top: 0, behavior: 'smooth' }) // o aviso fica no topo da página
     }
   }
 
@@ -209,7 +214,7 @@ export default function Encomendas() {
                         <td className="py-2 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {!enc.dataRetirada && <Botao onClick={() => retirar(enc.id)}>Marcar retirada</Botao>}
-                            <BotaoIcone tipo="excluir" onClick={() => excluir(enc.id)} />
+                            <BotaoIcone tipo="excluir" onClick={() => setEncomendaParaExcluir(enc)} />
                           </div>
                         </td>
                       </tr>
@@ -221,6 +226,15 @@ export default function Encomendas() {
           </>
         )}
       </Cartao>
+
+      {encomendaParaExcluir && (
+        <ModalConfirmar
+          titulo="Excluir encomenda?"
+          mensagem={`Você vai excluir o registro "${encomendaParaExcluir.descricao}". Essa ação não pode ser desfeita.`}
+          aoConfirmar={confirmarExclusao}
+          aoCancelar={() => setEncomendaParaExcluir(null)}
+        />
+      )}
     </>
   )
 }

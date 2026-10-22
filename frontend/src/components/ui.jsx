@@ -241,7 +241,7 @@ export function BotaoIcone({ tipo = 'editar', ...props }) {
       type="button"
       title={rotulo}
       aria-label={rotulo}
-      className={`rounded-lg p-2 transition focus:outline-none focus:ring-2 focus:ring-sky-200 ${cor}`}
+      className={`rounded-lg p-1 transition focus:outline-none focus:ring-2 focus:ring-sky-200 ${cor}`}
       {...props}
     >
       <svg
